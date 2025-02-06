@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import BarChart from './components/BarChart';
 import TransactionTable from './components/TransactionTable';
@@ -16,7 +17,7 @@ function App() {
   const [perPage] = useState(10);
   const BASE_URL = 'http://localhost:5000/api';
 
-  // Fetch Transactions
+ 
   const fetchTransactions = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/transactions`, {
@@ -30,7 +31,7 @@ function App() {
     }
   };
 
-  // Fetch Statistics
+ 
   const fetchStatistics = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/statistics`, {
@@ -42,7 +43,7 @@ function App() {
     }
   };
 
-  // Fetch Bar Chart Data
+ 
   const fetchBarChartData = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/barchart`, {
@@ -54,19 +55,19 @@ function App() {
     }
   };
 
-  // Handle Month Change
+ 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
-    setPage(1); // Reset page to 1 when month changes
+    setPage(1); 
   };
 
-  // Handle Search Change
+ 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // Reset page when search changes
+    setPage(1);
   };
 
-  // Handle Page Change (Next/Prev)
+ 
   const handlePageChange = (direction) => {
     if (direction === 'next' && page < totalPages) {
       setPage(page + 1);
@@ -82,16 +83,16 @@ function App() {
   }, [selectedMonth, search, page]);
 
   return (
-    <div className="App">
+    <div className="App text-center">
       <h1>Transaction Dashboard</h1>
       
-      {/* Month Selector */}
+     
       <MonthSelector selectedMonth={selectedMonth} onMonthChange={handleMonthChange} />
       
-      {/* Statistics Box */}
+     
       <StatisticsBox statistics={statistics} />
       
-      {/* Search Bar */}
+     
       <input 
         type="text" 
         placeholder="Search transactions" 
@@ -99,7 +100,7 @@ function App() {
         onChange={handleSearchChange} 
       />
       
-      {/* Transaction Table */}
+     
       <TransactionTable
         transactions={transactions} 
         onPageChange={handlePageChange}
@@ -107,7 +108,7 @@ function App() {
         totalPages={totalPages} 
       />
       
-      {/* Bar Chart */}
+     
       <BarChart data={barChartData} />
     </div>
   );
