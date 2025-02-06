@@ -1,51 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-
-const TransactionTable = () => {
-  const [transactions, setTransactions] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const fetchTransactions = async (currentPage) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch(
-        `http://localhost:5000/api/transactions?page=${currentPage}&perPage=10`
-      );
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Something went wrong");
-
-      setTransactions(data.transactions || []);
-      setTotalPages(data.totalPages || 1);
-    } catch (err) {
-      setError(err.message);
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTransactions(page);
-  }, [page]);
+const TransactionTable = ({ transactions, loading, page, totalPages, onPageChange }) => {
+  if (loading) {
+    return <div className="text-center">Loading...</div>;
+  }
 
   return (
-    <div className="container mt-4">
-      <h2 className="text-center mb-4">Transaction List</h2>
-
-      {loading && <p className="text-center text-primary">Loading...</p>}
-      {error && <p className="text-center text-danger">{error}</p>}
-      {!loading && transactions.length === 0 && (
-        <p className="text-center text-warning">No transactions found.</p>
-      )}
-
+    <div className="mt-4">
       <div className="table-responsive">
-        <table className="table table-striped table-hover text-center">
+        <table className="table table-striped table-hover">
           <thead className="table-dark">
             <tr>
               <th>Title</th>
@@ -65,9 +29,7 @@ const TransactionTable = () => {
                 <td>{new Date(transaction.dateOfSale).toLocaleDateString()}</td>
                 <td>{transaction.category}</td>
                 <td>
-                  <span
-                    className={`badge ${transaction.sold ? "bg-success" : "bg-danger"}`}
-                  >
+                  <span className={`badge ${transaction.sold ? "bg-success" : "bg-danger"}`}>
                     {transaction.sold ? "Yes" : "No"}
                   </span>
                 </td>
@@ -77,11 +39,10 @@ const TransactionTable = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="d-flex justify-content-center mt-3">
         <button
           className="btn btn-primary mx-2"
-          onClick={() => setPage(page - 1)}
+          onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
         >
           Previous
@@ -91,7 +52,7 @@ const TransactionTable = () => {
         </span>
         <button
           className="btn btn-primary mx-2"
-          onClick={() => setPage(page + 1)}
+          onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
         >
           Next

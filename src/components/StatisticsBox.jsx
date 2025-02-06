@@ -2,7 +2,7 @@ import React from "react";
 
 const StatisticsBox = ({ statistics }) => {
   return (
-    <div className="container mx-auto my-4">
+    <div className="container mx-autoy my-4">
       <h2 className="text-center mb-4">📊 Statistics</h2>
 
       <div className="row justify-center">

@@ -8,6 +8,7 @@ import StatisticsBox from './components/StatisticsBox';
 
 function App() {
   const [transactions, setTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [statistics, setStatistics] = useState({});
   const [barChartData, setBarChartData] = useState({});
   const [selectedMonth, setSelectedMonth] = useState('March');
@@ -15,101 +16,169 @@ function App() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [perPage] = useState(10);
+  const [loading, setLoading] = useState({
+    transactions: false,
+    statistics: false,
+    barChart: false
+  });
   const BASE_URL = 'http://localhost:5000/api';
 
  
   const fetchTransactions = async () => {
     try {
+      setLoading(prev => ({ ...prev, transactions: true }));
       const response = await axios.get(`${BASE_URL}/transactions`, {
-        params: { month: selectedMonth, search, page, perPage },
+        params: { month: selectedMonth }
       });
-      setTransactions(response.data);
-      // Calculate total pages based on response (if available)
-      setTotalPages(Math.ceil(response.data.total / perPage));
+      const allTransactions = response.data.transactions || [];
+      setTransactions(allTransactions);
+      filterAndPaginateTransactions(allTransactions, search, page);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, transactions: false }));
     }
+  };
+
+  
+  const filterAndPaginateTransactions = (allTransactions, searchTerm, currentPage) => {
+    let filtered = allTransactions;
+
+   
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(transaction =>
+        transaction.title.toLowerCase().includes(searchLower) ||
+        transaction.description.toLowerCase().includes(searchLower) ||
+        transaction.category.toLowerCase().includes(searchLower)
+      );
+    }
+
+   
+    const total = Math.ceil(filtered.length / perPage);
+    setTotalPages(total);
+
+   
+    const start = (currentPage - 1) * perPage;
+    const paginatedData = filtered.slice(start, start + perPage);
+    
+    setFilteredTransactions(paginatedData);
   };
 
  
   const fetchStatistics = async () => {
     try {
+      setLoading(prev => ({ ...prev, statistics: true }));
       const response = await axios.get(`${BASE_URL}/statistics`, {
-        params: { month: selectedMonth },
+        params: { month: selectedMonth }
       });
       setStatistics(response.data);
     } catch (error) {
       console.error('Error fetching statistics:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, statistics: false }));
     }
   };
 
- 
+  
   const fetchBarChartData = async () => {
     try {
+      setLoading(prev => ({ ...prev, barChart: true }));
       const response = await axios.get(`${BASE_URL}/barchart`, {
-        params: { month: selectedMonth },
+        params: { month: selectedMonth }
       });
       setBarChartData(response.data);
     } catch (error) {
       console.error('Error fetching bar chart data:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, barChart: false }));
     }
   };
 
- 
+  
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
-    setPage(1); 
-  };
-
- 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
     setPage(1);
+    setSearch('');
+  };
+
+  
+  const handleSearchChange = (e) => {
+    const searchTerm = e.target.value;
+    setSearch(searchTerm);
+    setPage(1);
+    filterAndPaginateTransactions(transactions, searchTerm, 1);
   };
 
  
-  const handlePageChange = (direction) => {
-    if (direction === 'next' && page < totalPages) {
-      setPage(page + 1);
-    } else if (direction === 'prev' && page > 1) {
-      setPage(page - 1);
-    }
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    filterAndPaginateTransactions(transactions, search, newPage);
   };
 
+ 
   useEffect(() => {
     fetchTransactions();
     fetchStatistics();
     fetchBarChartData();
-  }, [selectedMonth, search, page]);
+  }, [selectedMonth]);
 
   return (
-    <div className="App text-center">
-      <h1>Transaction Dashboard</h1>
+    <div className="container py-4 mx-auto">
+      <h1 className="text-center mb-4">Transaction Dashboard</h1>
       
      
-      <MonthSelector selectedMonth={selectedMonth} onMonthChange={handleMonthChange} />
+      <div className="row mb-4">
+        <div className="col-12">
+          <MonthSelector selectedMonth={selectedMonth} onMonthChange={handleMonthChange} />
+        </div>
+      </div>
+
       
+      <div className="row mb-4">
+        <div className="col-12">
+          <StatisticsBox 
+            statistics={statistics} 
+            loading={loading.statistics}
+          />
+        </div>
+      </div>
+
+    
+      <div className="row mb-4">
+        <div className=" col-12 xl:col-3">
+          <input 
+            type="text" 
+            className="form-control"
+            placeholder="Search transactions..." 
+            value={search}
+            onChange={handleSearchChange} 
+          />
+        </div>
+      </div>
+
+    
+      <div className="row mb-4">
+        <div className="col-12">
+          <TransactionTable
+            transactions={filteredTransactions}
+            loading={loading.transactions}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
+
      
-      <StatisticsBox statistics={statistics} />
-      
-     
-      <input 
-        type="text" 
-        placeholder="Search transactions" 
-        value={search}
-        onChange={handleSearchChange} 
-      />
-      
-     
-      <TransactionTable
-        transactions={transactions} 
-        onPageChange={handlePageChange}
-        page={page}
-        totalPages={totalPages} 
-      />
-      
-     
-      <BarChart data={barChartData} />
+      <div className="row">
+        <div className="col-12">
+          <BarChart 
+            data={barChartData} 
+            loading={loading.barChart}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -22,7 +22,7 @@ const BarChart = ({ data }) => {
       <h2 className='pt-4'>Transactions Bar Chart</h2>
       <Bar data={chartData} />
     </div>
-  );
+  );  
 };
 
 export default BarChart;
